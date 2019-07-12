@@ -6,8 +6,8 @@ from rpy2.rinterface import RRuntimeWarning
 import scipy.sparse
 import pandas as pd
 
+
 class MAST(object):
-    
     def __init__(self, A, B, data, labels, cluster):
         """
         A: number of cells in the first cluster
@@ -35,7 +35,6 @@ class MAST(object):
         ro.r(str("""fmat <- npyLoad("*""")[:-1] + self.data + str("""*", "integer")""")[1:])
         ro.r(str("""cmat <- read.table("*""")[:-1] + self.labels + str("""*")""")[1:])
         ro.r("cmat$V2 <- factor(cmat$V1)")
-        
 
     def fit(self, return_fc=False):
         # computing data mask
@@ -45,6 +44,8 @@ class MAST(object):
         subset_b = np.random.choice(set_b, self.B)
 
         stochastic_set = np.hstack((subset_a, subset_b))
+
+        # Mask 1D True False
         f = np.array([a in stochastic_set for a in np.arange(self.X_train.shape[0])])
 
         nr, nc = f[:, np.newaxis].shape
@@ -55,21 +56,26 @@ class MAST(object):
         ro.r("local_fmat <- log2(fmat[f, ] + 1)")
         ro.r("local_cmat <- cmat[f, ]")
         ro.r("local_cmat$V3 <- factor(local_cmat$V1)")
-        
-        
+
         ro.r("sca <- FromMatrix(t(data.frame(local_fmat)), data.frame(local_cmat$V3))")
         ro.r("zlmCond <- zlm(~local_cmat.V3, sca)")
-        ro.r("""summaryCond <- summary(zlmCond, doLRT='local_cmat.V34')""") 
+        ro.r("""summaryCond <- summary(zlmCond, doLRT='local_cmat.V31')""")
         ro.r("summaryDt <- summaryCond$datatable")
         ro.r("""fcHurdle <- merge(
-                summaryDt[contrast=='local_cmat.V34' & component=='H',.(primerid, `Pr(>Chisq)`)],
+                summaryDt[contrast=='local_cmat.V31' & component=='H',.(primerid, `Pr(>Chisq)`)],
                     #hurdle P values
-                summaryDt[contrast=='local_cmat.V34' & component=='logFC', .(primerid, coef, ci.hi, ci.lo)],
+                summaryDt[contrast=='local_cmat.V31' & component=='logFC', .(primerid, coef, ci.hi, ci.lo)],
                 by='primerid') #logFC coefficients""")
-        data = pd.DataFrame([ro.r("fcHurdle$primerid"), ro.r("""fcHurdle$'Pr(>Chisq)'"""), ro.r("fcHurdle$coef")]).T
-        data.columns = ["gene_index", "p_value", "coeff"]
-        data["gene_index"] = data["gene_index"].apply(lambda x: int(str(x)[1:]))
-        data.sort_values("gene_index", inplace=True)
+        # data = pd.DataFrame([ro.r("fcHurdle$primerid"), ro.r("""fcHurdle$'Pr(>Chisq)'"""), ro.r("fcHurdle$coef")]).T
+        # data.columns = ["gene_index", "p_value", "coeff"]
+        # # data["gene_index"] = data["gene_index"].apply(lambda x: int(str(x)[1:]))
+        # data.sort_values("gene_index", inplace=True)
+
+        index = [int(elem[1:]) for elem in list(ro.r("fcHurdle$primerid"))]
+        p_value = list(ro.r("""fcHurdle$'Pr(>Chisq)'"""))
+        coeff = list(ro.r("fcHurdle$coef"))
+        data = pd.DataFrame(dict(p_value=p_value, coeff=coeff), index=index).sort_index()
+
         if return_fc:
             return data["p_value"].values.astype(np.float), data["coeff"].values.astype(np.float)
         return data["p_value"].values.astype(np.float)

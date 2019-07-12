@@ -5,8 +5,19 @@ import numpy as np
 from rpy2.rinterface import RRuntimeWarning
 import scipy
 
+"""
+Example
+weight_edge_R_de = Weighted_edgeR(
+    A=100, 
+    B=100,
+    data=data_path + "de/data_train.npy", 
+    labels=data_path + "label_train", 
+    couple_celltypes=(3, 2), 
+    weights=data_path + "de/weight_train.npy")
+"""
+
+
 class DESeq2(object):
-    
     def __init__(self, A, B, data, labels, cluster):
         """
         A: number of cells in the first cluster
@@ -35,7 +46,6 @@ class DESeq2(object):
         #ro.r(str("""fmat <- npyLoad("*""")[:-1] + self.data + str("""*", "numeric")""")[1:])
         ro.r(str("""cmat <- read.table("*""")[:-1] + self.labels + str("""*")""")[1:])
         ro.r("cmat$V2 <- factor(cmat$V1)")
-        
 
     def fit(self, return_fc=False):
         
@@ -66,7 +76,6 @@ class DESeq2(object):
     
     
 class Weighted_edgeR(object):
-    
     def __init__(self, A, B, data, labels, cluster, weights):
         """
         A: number of cells in the first cluster

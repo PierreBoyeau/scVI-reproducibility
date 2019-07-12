@@ -4,7 +4,9 @@ import warnings
 import numpy as np
 from rpy2.rinterface import RRuntimeWarning
 import scipy
-class edgeR(object):
+
+
+class EdgeR(object):
     
     def __init__(self, A, B, data, labels, cluster):
         """
