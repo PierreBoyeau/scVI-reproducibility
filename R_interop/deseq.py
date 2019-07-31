@@ -48,7 +48,6 @@ class DESeq2(object):
         ro.r("cmat$V2 <- factor(cmat$V1)")
 
     def fit(self, return_fc=False):
-        
         # computing data mask
         set_a = np.where(self.c_train == self.cluster[0])[0]
         subset_a = np.random.choice(set_a, self.A)
@@ -107,7 +106,6 @@ class Weighted_edgeR(object):
         ro.r("cmat$V2 <- factor(cmat$V1)")
 
     def fit(self):
-        
         # computing data mask
         set_a = np.where(self.c_train == self.cluster[0])[0]
         subset_a = np.random.choice(set_a, self.A)
@@ -138,4 +136,4 @@ class Weighted_edgeR(object):
         ro.r("""lrt <- glmWeightedF(fit, coef = 2)""")
         #print ro.r("lrt")
         return ro.r("lrt$table$PValue")
-    
+
