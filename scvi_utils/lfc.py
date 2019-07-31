@@ -42,7 +42,7 @@ def estimate_lfc_density(
     )
     post = my_trainer.test_set
     train_indices = post.data_loader.sampler.indices
-    train_samples = np.random.permutation(train_indices)[:2000]
+    train_samples = np.random.permutation(train_indices)
     post = my_trainer.create_posterior(
         model=my_vae, gene_dataset=dataset, indices=train_samples
     )
@@ -86,7 +86,7 @@ def estimate_lfc_mean(
     )
     post = my_trainer.test_set
     train_indices = post.data_loader.sampler.indices
-    train_samples = np.random.permutation(train_indices)[:2000]
+    train_samples = np.random.permutation(train_indices)
     post = my_trainer.create_posterior(
         model=my_vae, gene_dataset=dataset, indices=train_samples
     )
@@ -135,7 +135,7 @@ def estimate_de_proba(
         )
         post = my_trainer.test_set
         train_indices = post.data_loader.sampler.indices
-        train_samples = np.random.permutation(train_indices)[:2000]
+        train_samples = np.random.permutation(train_indices)
         post = my_trainer.create_posterior(
             model=my_vae, gene_dataset=dataset, indices=train_samples
         )
