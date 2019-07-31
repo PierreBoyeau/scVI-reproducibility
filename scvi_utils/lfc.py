@@ -2,6 +2,7 @@ from scvi.inference import UnsupervisedTrainer
 from scvi.utils import demultiply
 from tqdm import tqdm_notebook
 import numpy as np
+import warnings
 
 
 def train_model(
@@ -16,6 +17,8 @@ def train_model(
     :param train_fn_params:
     :return:
     """
+    if 'test_indices' not in train_params:
+        warnings.warn('No `test_indices` attribute found.')
     my_vae = mdl_class(dataset.nb_genes, n_batch=dataset.n_batches, **mdl_params)
     my_trainer = UnsupervisedTrainer(my_vae, dataset, **train_params)
     my_trainer.train(**train_fn_params)
