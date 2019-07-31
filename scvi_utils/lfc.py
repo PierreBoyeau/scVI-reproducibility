@@ -32,6 +32,8 @@ def estimate_lfc_density(
     sizes: list,
     n_picks: int = 10,
     n_samples: int = 500,
+    label_a=0,
+    label_b=1
 ):
     """
 
@@ -52,8 +54,8 @@ def estimate_lfc_density(
         lfc_size = []
         for exp in range(n_picks):
             labels = labels.squeeze()
-            where_a = np.where(labels == 0)[0]
-            where_b = np.where(labels == 1)[0]
+            where_a = np.where(labels == label_a)[0]
+            where_b = np.where(labels == label_b)[0]
             where_a = where_a[np.random.choice(len(where_a), size=size)]
             where_b = where_b[np.random.choice(len(where_b), size=size)]
             scales_a = scales[:, where_a, :].reshape((-1, dataset.nb_genes)).numpy()
@@ -76,6 +78,8 @@ def estimate_lfc_mean(
     sizes: list,
     n_picks: int = 10,
     n_samples: int = 500,
+    label_a=0,
+    label_b=1
 ) -> dict:
     """
         Returns LFC POINT ESTIMATES
@@ -96,8 +100,8 @@ def estimate_lfc_mean(
         lfc_size = []
         for exp in range(n_picks):
             labels = labels.squeeze()
-            where_a = np.where(labels == 0)[0]
-            where_b = np.where(labels == 1)[0]
+            where_a = np.where(labels == label_a)[0]
+            where_b = np.where(labels == label_b)[0]
             where_a = where_a[np.random.choice(len(where_a), size=size)]
             where_b = where_b[np.random.choice(len(where_b), size=size)]
             scales_a = scales[:, where_a, :].reshape((-1, dataset.nb_genes)).numpy()
@@ -122,6 +126,8 @@ def estimate_de_proba(
     n_trainings: int = 5,
     n_picks: int = 25,
     n_samples: int = 500,
+    label_a=0,
+    label_b=1
 ):
     """
 
@@ -146,8 +152,8 @@ def estimate_de_proba(
         for (size_ix, size) in enumerate(tqdm_notebook(sizes)):
             for exp in range(n_picks):
                 labels = labels.squeeze()
-                where_a = np.where(labels == 0)[0]
-                where_b = np.where(labels == 1)[0]
+                where_a = np.where(labels == label_a)[0]
+                where_b = np.where(labels == label_b)[0]
                 where_a = where_a[np.random.choice(len(where_a), size=size)]
                 where_b = where_b[np.random.choice(len(where_b), size=size)]
                 scales_a = scales[:, where_a, :].reshape((-1, dataset.nb_genes)).numpy()

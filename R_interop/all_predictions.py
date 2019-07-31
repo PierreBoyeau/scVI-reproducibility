@@ -6,7 +6,9 @@ from .edge_r import EdgeR
 from .mast import MAST
 
 
-def all_predictions(n_genes, n_picks, sizes, data_path, labels_path):
+def all_predictions(
+    n_genes, n_picks, sizes, data_path, labels_path, label_a=0, label_b=1
+):
     n_sizes = len(sizes)
 
     # DESeq2
@@ -15,7 +17,11 @@ def all_predictions(n_genes, n_picks, sizes, data_path, labels_path):
     for (size_ix, size) in enumerate(tqdm(sizes)):
         for exp in range(n_picks):
             deseq_inference = DESeq2(
-                A=size, B=size, data=data_path, labels=labels_path, cluster=(0, 1)
+                A=size,
+                B=size,
+                data=data_path,
+                labels=labels_path,
+                cluster=(label_a, label_b),
             )
             pvals, lfcs = deseq_inference.fit(return_fc=True)
             lfcs_deseq2[size_ix, exp, :] = np.asarray(lfcs)
@@ -28,7 +34,11 @@ def all_predictions(n_genes, n_picks, sizes, data_path, labels_path):
     for (size_ix, size) in enumerate(tqdm(sizes)):
         for exp in range(n_picks):
             deseq_inference = EdgeR(
-                A=size, B=size, data=data_path, labels=labels_path, cluster=(0, 1)
+                A=size,
+                B=size,
+                data=data_path,
+                labels=labels_path,
+                cluster=(label_a, label_b),
             )
             pvals, lfcs = deseq_inference.fit(return_fc=True)
             lfcs_edge_r[size_ix, exp, :] = np.asarray(lfcs)
@@ -41,7 +51,11 @@ def all_predictions(n_genes, n_picks, sizes, data_path, labels_path):
     for (size_ix, size) in enumerate(tqdm(sizes)):
         for exp in range(n_picks):
             mast_inference = MAST(
-                A=size, B=size, data=data_path, labels=labels_path, cluster=(0, 1)
+                A=size,
+                B=size,
+                data=data_path,
+                labels=labels_path,
+                cluster=(label_a, label_b),
             )
             pvals, lfcs = mast_inference.fit(return_fc=True)
             lfcs_mast[size_ix, exp, :] = lfcs
