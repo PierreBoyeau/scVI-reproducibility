@@ -74,8 +74,5 @@ class MAST(object):
         index = [int(elem[1:]) for elem in list(ro.r("fcHurdle$primerid"))]
         p_value = list(ro.r("""fcHurdle$'Pr(>Chisq)'"""))
         coeff = list(ro.r("fcHurdle$coef"))
-        data = pd.DataFrame(dict(p_value=p_value, coeff=coeff), index=index).sort_index()
-
-        if return_fc:
-            return data["p_value"].values.astype(np.float), data["coeff"].values.astype(np.float)
-        return data["p_value"].values.astype(np.float)
+        data = pd.DataFrame(dict(pval=p_value, lfc=coeff), index=index).sort_index()
+        return data

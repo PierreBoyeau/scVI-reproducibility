@@ -2,12 +2,12 @@ import rpy2.robjects as ro
 import rpy2.robjects.numpy2ri
 import warnings
 import numpy as np
+import pandas as pd
 from rpy2.rinterface import RRuntimeWarning
 import scipy
 
 
 class EdgeR(object):
-    
     def __init__(self, A, B, data, labels, cluster):
         """
         A: number of cells in the first cluster
@@ -51,7 +51,6 @@ class EdgeR(object):
         f_r = ro.r.matrix(f[:, np.newaxis], nrow=nr, ncol=nc)
         ro.r.assign("f_", f_r)
         ro.r("f <- as.integer(rownames(cmat[f_,]))")
-        
         ro.r("local_fmat <- fmat[f, ]")
         ro.r("local_cmat <- cmat[f, ]")
         ro.r("local_cmat$V3 <- factor(local_cmat$V1)")
@@ -64,7 +63,5 @@ class EdgeR(object):
         ro.r("""dge <- estimateDisp(dge, design)""")
         ro.r("""fit <- glmFit(dge, design)""")
         ro.r("""lrt <- glmWeightedF(fit, coef = 2, ZI=FALSE)""")
-        if return_fc:
-            return ro.r("lrt$table$PValue"), ro.r("lrt$table$logFC")
-        else:
-            return ro.r("lrt$table$PValue")
+        return pd.DataFrame(ro.r("lrt$table)"))
+

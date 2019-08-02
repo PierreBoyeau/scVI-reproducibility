@@ -4,6 +4,7 @@ import warnings
 import numpy as np
 from rpy2.rinterface import RRuntimeWarning
 import scipy
+import pandas as pd
 
 """
 Example
@@ -68,10 +69,7 @@ class DESeq2(object):
         ro.r("dds <- DESeqDataSetFromMatrix(countData = t(local_fmat), colData = local_cmat, design = ~ V3)")
         ro.r("dds <- DESeq(dds)")
         ro.r("res <- results(dds)")
-        if return_fc:
-            return ro.r("res@listData$pvalue"), ro.r("res@listData$log2FoldChange")
-        else:
-            return ro.r("res@listData$pvalue")  
+        return pd.DataFrame(ro.r("res@listData"))
     
     
 class Weighted_edgeR(object):
