@@ -111,7 +111,9 @@ def estimate_lfc_mean(
             scales_b = scales[:, where_b, :].reshape((-1, dataset.nb_genes)).numpy()
             scales_a, scales_b = demultiply(arr1=scales_a, arr2=scales_b, factor=3)
             lfc = np.log2(scales_a) - np.log2(scales_b)
-            assert not np.isnan(lfc).any(), lfc
+            # assert not np.isnan(lfc).any(), lfc
+            if np.isnan(lfc).any():
+                warnings.warn("NaN values appeared in LFCs")
             lfc_size.append(lfc.mean(0))
         lfc_size = np.array(lfc_size)
         lfcs[size] = lfc_size
