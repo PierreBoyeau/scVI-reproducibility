@@ -163,7 +163,8 @@ def estimate_de_proba(
                 scales_b = scales[:, where_b, :].reshape((-1, dataset.nb_genes)).numpy()
                 scales_a, scales_b = demultiply(arr1=scales_a, arr2=scales_b, factor=3)
                 lfc = np.log2(scales_a) - np.log2(scales_b)
-                # assert not np.isnan(lfc).any(), lfc
+                if np.isnan(lfc).any():
+                    warnings.warn("NaN values appeared in LFCs")
 
                 pgs = np.nanmean(np.abs(lfc) >= delta, axis=0)
                 de_probas[training, size_ix, exp, :] = pgs
