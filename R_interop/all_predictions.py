@@ -84,7 +84,10 @@ def all_predictions(
                     path_to_scripts=path_to_scripts
                 )
                 res_df = mast_inference.fit()
-                var_lfcs_mast[size_ix, exp, :] = res_df["var_lfc"]
+                print(res_df.info())
+                var_lfcs_mast[size_ix, exp, :] = res_df["varLogFC"].values
+                lfcs_mast[size_ix, exp, :] = res_df["logFC"].values
+
             else:
                 mast_inference = MAST(
                     A=size,
@@ -94,7 +97,7 @@ def all_predictions(
                     cluster=(label_a, label_b),
                 )
                 res_df = mast_inference.fit(return_fc=True)
-            lfcs_mast[size_ix, exp, :] = res_df["lfc"].values
+                lfcs_mast[size_ix, exp, :] = res_df["lfc"].values
             pvals_mast[size_ix, exp, :] = res_df["pval"].values
     mast_res = dict(lfc=lfcs_mast.squeeze(), pval=pvals_mast.squeeze(), var_lfc=var_lfcs_mast)
 
