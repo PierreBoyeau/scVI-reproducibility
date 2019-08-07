@@ -1,10 +1,23 @@
 import numpy as np
 from tqdm import tqdm
+import os
+import pickle
+from . import NDESeq2, NEdgeRLTRT, MAST, NMASTcpm
 
-from . import NDESeq2, NEdgeRLTRT, MAST
+
+def save_pickle(data, filename):
+    with open(filename, 'wb') as f:
+        pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+
+
+def load_pickle(filename):
+    with open(filename, 'rb') as f:
+        res = pickle.load(f)
+    return res
 
 
 def all_predictions(
+    filename,
     n_genes,
     n_picks,
     sizes,
@@ -13,7 +26,10 @@ def all_predictions(
     label_a=0,
     label_b=1,
     path_to_scripts=None,
+    all_nature=False
 ):
+    if os.path.exists(filename):
+        return load_pickle(filename)
     n_sizes = len(sizes)
 
     # DESeq2
@@ -54,18 +70,34 @@ def all_predictions(
 
     # MAST
     lfcs_mast = np.zeros((n_sizes, n_picks, n_genes))
+    var_lfcs_mast = np.zeros((n_sizes, n_picks, n_genes))
     pvals_mast = np.zeros((n_sizes, n_picks, n_genes))
     for (size_ix, size) in enumerate(tqdm(sizes)):
         for exp in range(n_picks):
-            mast_inference = MAST(
-                A=size,
-                B=size,
-                data=data_path,
-                labels=labels_path,
-                cluster=(label_a, label_b),
-            )
-            res_df = mast_inference.fit(return_fc=True)
+            if all_nature:
+                mast_inference = NMASTcpm(
+                    A=size,
+                    B=size,
+                    data=data_path,
+                    labels=labels_path,
+                    cluster=(label_a, label_b),
+                    path_to_scripts=path_to_scripts
+                )
+                res_df = mast_inference.fit()
+                var_lfcs_mast[size_ix, exp, :] = res_df["var_lfc"]
+            else:
+                mast_inference = MAST(
+                    A=size,
+                    B=size,
+                    data=data_path,
+                    labels=labels_path,
+                    cluster=(label_a, label_b),
+                )
+                res_df = mast_inference.fit(return_fc=True)
             lfcs_mast[size_ix, exp, :] = res_df["lfc"].values
             pvals_mast[size_ix, exp, :] = res_df["pval"].values
-    mast_res = dict(lfc=lfcs_mast.squeeze(), pval=pvals_mast.squeeze())
-    return dict(deseq2=deseq_res, edger=edger_res, mast=mast_res)
+    mast_res = dict(lfc=lfcs_mast.squeeze(), pval=pvals_mast.squeeze(), var_lfc=var_lfcs_mast)
+
+    results = dict(deseq2=deseq_res, edger=edger_res, mast=mast_res)
+    save_pickle(data=results, filename=filename)
+    return results
