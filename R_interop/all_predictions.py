@@ -120,10 +120,10 @@ def all_de_predictions(dict_results, significance_level, delta):
     :return:
     """
     for algorithm_name in dict_results:
-        my_pvals = dict_results[algorithm_name['pval']]
+        my_pvals = dict_results[algorithm_name]['pval']
         my_pvals[np.isnan(my_pvals)] = 1.0
 
-        my_lfcs = dict_results[algorithm_name['lfc']]
+        my_lfcs = dict_results[algorithm_name]['lfc']
         my_lfcs[np.isnan(my_lfcs)] = 0.0
 
         if algorithm_name == "deseq2":
