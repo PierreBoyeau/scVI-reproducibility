@@ -104,3 +104,35 @@ def all_predictions(
     results = dict(deseq2=deseq_res, edger=edger_res, mast=mast_res)
     save_pickle(data=results, filename=filename)
     return results
+
+
+def all_de_predictions(dict_results, significance_level, delta):
+    """
+
+    :param dict_results:
+        algorithm:
+            lfc
+            pval
+    :param significance_level:
+    :param delta:
+    :return:
+    """
+    for algorithm_name in dict_results:
+        my_pvals = dict_results[algorithm_name['pval']]
+        my_pvals[np.isnan(my_pvals)] = 1.0
+
+        my_lfcs = dict_results[algorithm_name['lfc']]
+        my_lfcs[np.isnan(my_lfcs)] = 0.0
+
+        if algorithm_name == "deseq2":
+            is_de = my_pvals <= significance_level
+
+        elif algorithm_name == "edger":
+            is_de = my_pvals <= significance_level
+
+        elif algorithm_name == "mast":
+            is_de = (my_pvals <= significance_level) * (np.abs(my_lfcs) >= delta)
+        else:
+            raise KeyError("No DE policy for {}".format(algorithm_name))
+        dict_results[algorithm_name]['is_de'] = is_de
+    return dict_results

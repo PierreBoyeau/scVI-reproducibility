@@ -3,7 +3,7 @@ from .edge_r import EdgeR
 from .IDR import IDR
 from .mast import MAST
 from .nature import *
-from .all_predictions import all_predictions
+from .all_predictions import all_predictions, all_de_predictions
 
 __all__ = [
     "DESeq2",
@@ -12,9 +12,8 @@ __all__ = [
     "IDR",
     "MAST",
     'all_predictions',
-
+    "all_de_predictions",
     "NEdgeRLTRT",
     "NDESeq2",
     "NMASTcpm",
-    "NSCDE",
 ]
