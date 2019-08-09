@@ -26,6 +26,7 @@ def all_predictions(
     label_a=0,
     label_b=1,
     path_to_scripts=None,
+    lfc_threshold: float = 0.5,
     all_nature=False
 ):
     if os.path.exists(filename):
@@ -44,6 +45,7 @@ def all_predictions(
                 labels=labels_path,
                 cluster=(label_a, label_b),
                 path_to_scripts=path_to_scripts,
+                lfc_threshold=lfc_threshold
             )
             res_df = deseq_inference.fit()
             lfcs_deseq2[size_ix, exp, :] = res_df["lfc"].values

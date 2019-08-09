@@ -116,7 +116,10 @@ class NDESeq2(DEClass):
         labels: str,
         cluster: tuple,
         path_to_scripts: str,
+        lfc_threshold: float = 0.5,
     ):
+        ro.r.assign("lfc_threshold", lfc_threshold)
+
         super().__init__(
             A=A,
             B=B,
@@ -129,7 +132,7 @@ class NDESeq2(DEClass):
     def fit(self):
         ro.r("script_path <- paste(path_to_scripts, 'apply_DESeq2.R', sep='/')")
         ro.r("source(script_path)")
-        ro.r("res <- run_DESeq2(L)")
+        ro.r("res <- run_DESeq2(L, lfcThreshold=lfc_threshold)")
         return pd.DataFrame(ro.r("res$df"))
 
 
