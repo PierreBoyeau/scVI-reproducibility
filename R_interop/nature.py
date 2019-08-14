@@ -107,6 +107,32 @@ class NEdgeRLTRT(DEClass):
         return pd.DataFrame(ro.r("res$df"))
 
 
+class NEdgeRLTRTRobust(DEClass):
+    def __init__(
+        self,
+        A: int,
+        B: int,
+        data: str,
+        labels: str,
+        cluster: tuple,
+        path_to_scripts: str,
+    ):
+        super().__init__(
+            A=A,
+            B=B,
+            data=data,
+            labels=labels,
+            cluster=cluster,
+            path_to_scripts=path_to_scripts,
+        )
+
+    def fit(self):
+        ro.r("script_path <- paste(path_to_scripts, 'apply_edgeRLRTrobust.R', sep='/')")
+        ro.r("source(script_path)")
+        ro.r("res <- run_edgeRLRTrobust(L)")
+        return pd.DataFrame(ro.r("res$df"))
+
+
 class NDESeq2(DEClass):
     def __init__(
         self,
