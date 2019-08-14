@@ -8,18 +8,23 @@ import pickle
 
 
 def save_pickle(data, filename):
-    with open(filename, 'wb') as f:
+    with open(filename, "wb") as f:
         pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 
 
 def load_pickle(filename):
-    with open(filename, 'rb') as f:
+    with open(filename, "rb") as f:
         res = pickle.load(f)
     return res
 
 
 def train_model(
-    mdl_class, dataset, mdl_params: dict, train_params: dict, train_fn_params: dict
+    mdl_class,
+    dataset,
+    mdl_params: dict,
+    train_params: dict,
+    train_fn_params: dict,
+    filename: str = None,
 ):
     """
 
@@ -28,10 +33,15 @@ def train_model(
     :param mdl_params:
     :param train_params:
     :param train_fn_params:
+    :param filename
     :return:
     """
-    if 'test_indices' not in train_params:
-        warnings.warn('No `test_indices` attribute found.')
+    if os.path.exists(filename):
+        res = load_pickle(filename)
+        return res["vae"], res["trainer"]
+
+    if "test_indices" not in train_params:
+        warnings.warn("No `test_indices` attribute found.")
     my_vae = mdl_class(dataset.nb_genes, n_batch=dataset.n_batches, **mdl_params)
     my_trainer = UnsupervisedTrainer(my_vae, dataset, **train_params)
     my_trainer.train(**train_fn_params)
@@ -50,13 +60,11 @@ def estimate_lfc_density(
     n_picks: int = 10,
     n_samples: int = 500,
     label_a=0,
-    label_b=1
+    label_b=1,
 ):
     """
 
     """
-    if os.path.exists(filename):
-        return load_pickle(filename)
 
     lfcs = dict()
     my_vae, my_trainer = train_model(
@@ -101,7 +109,7 @@ def estimate_lfc_mean(
     n_picks: int = 10,
     n_samples: int = 500,
     label_a=0,
-    label_b=1
+    label_b=1,
 ) -> dict:
     """
         Returns LFC POINT ESTIMATES
@@ -155,7 +163,7 @@ def estimate_de_proba(
     n_picks: int = 25,
     n_samples: int = 500,
     label_a=0,
-    label_b=1
+    label_b=1,
 ):
     """
 
@@ -198,4 +206,3 @@ def estimate_de_proba(
                 de_probas[training, size_ix, exp, :] = pgs
     np.save(file=filename, arr=de_probas)
     return de_probas
-
