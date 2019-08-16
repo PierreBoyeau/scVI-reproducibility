@@ -1,7 +1,8 @@
 from scvi.inference import UnsupervisedTrainer
-from scvi.utils import demultiply
+from scvi.utils import demultiply, compute_hdi
 import os
 from tqdm import tqdm_notebook
+import pandas as pd
 import numpy as np
 import warnings
 import pickle
@@ -206,3 +207,95 @@ def estimate_de_proba(
                 de_probas[training, size_ix, exp, :] = pgs
     np.save(file=filename, arr=de_probas)
     return de_probas
+
+
+def multi_train_estimates(
+    filename,
+    mdl_class,
+    dataset,
+    mdl_params: dict,
+    train_params: dict,
+    train_fn_params: dict,
+    sizes: list,
+    delta: float = 0.5,
+    n_trainings: int = 5,
+    n_picks: int = 25,
+    n_samples: int = 500,
+    label_a=0,
+    label_b=1,
+):
+    """
+
+    """
+    if os.path.exists(filename):
+        return pd.read_pickle(filename)
+
+    n_sizes = len(sizes)
+    # de_probas = np.zeros((n_trainings, n_sizes, n_picks, dataset.nb_genes))
+    # lfc_means = np.zeros((n_trainings, n_sizes, n_picks, dataset.nb_genes))
+    # lfc_stds = np.zeros((n_trainings, n_sizes, n_picks, dataset.nb_genes))
+    # hdis64 = np.zeros((n_trainings, n_sizes, n_picks, dataset.nb_genes, 2))
+    # hdis99 = np.zeros((n_trainings, n_sizes, n_picks, dataset.nb_genes, 2))
+
+    #     lfcs = np.zeros((n_trainings, N_SIZES, n_picks, dataset.nb_genes, 3*n_samples))
+    dfs_li = []
+    for training in range(n_trainings):
+        my_vae, my_trainer = train_model(
+            mdl_class, dataset, mdl_params, train_params, train_fn_params
+        )
+        post = my_trainer.test_set
+        train_indices = post.data_loader.sampler.indices
+        train_samples = np.random.permutation(train_indices)
+        post = my_trainer.create_posterior(
+            model=my_vae, gene_dataset=dataset, indices=train_samples
+        )
+        z, labels, scales = post.get_latents(
+            n_samples=n_samples, other=True, device="cpu"
+        )
+
+        for (size_ix, size) in enumerate(tqdm_notebook(sizes)):
+            for exp in range(n_picks):
+                labels = labels.squeeze()
+                where_a = np.where(labels == label_a)[0]
+                where_b = np.where(labels == label_b)[0]
+                where_a = where_a[np.random.choice(len(where_a), size=size)]
+                where_b = where_b[np.random.choice(len(where_b), size=size)]
+                scales_a = scales[:, where_a, :].reshape((-1, dataset.nb_genes)).numpy()
+                scales_b = scales[:, where_b, :].reshape((-1, dataset.nb_genes)).numpy()
+                scales_a, scales_b = demultiply(arr1=scales_a, arr2=scales_b, factor=3)
+                lfc = np.log2(scales_a) - np.log2(scales_b)
+                assert lfc.shape[1] == dataset.nb_genes
+                if np.isnan(lfc).any():
+                    warnings.warn("NaN values appeared in LFCs")
+
+                pgs = np.nanmean(np.abs(lfc) >= delta, axis=0)
+                lfc_mean = np.nanmean(lfc, axis=0)
+                lfc_std = np.nanstd(lfc, axis=0)
+                hdi64 = compute_hdi(lfc, credible_interval=0.64)
+                hdi99 = compute_hdi(lfc, credible_interval=0.99)
+
+                df = pd.DataFrame(
+                    dict(
+                        de_proba=pgs,
+                        lfc_mean=lfc_mean,
+                        lfc_std=lfc_std,
+                        hdi64_low=hdi64[:, 0],
+                        hdi64_high=hdi64[:, 1],
+                        hdi99_low=hdi99[:, 0],
+                        hdi99_high=hdi99[:, 1],
+                    )
+                ).assign(
+                    experiment=lambda x: exp,
+                    sample_size=lambda x: size,
+                    training=lambda x: training,
+                )
+                dfs_li.append(df)
+    df_res = pd.concat(dfs_li, ignore_index=True)
+
+    # de_probas[training, size_ix, exp, :] = pgs
+    # lfc_means[training, size_ix, exp, :] = lfc_mean
+    # lfc_stds[training, size_ix, exp, :] = lfc_std
+    # hdis64[training, size_ix, exp, :] = hdi64
+    # hdis99[training, size_ix, exp, :] = hdi99
+    df_res.to_pickle(filename)
+    return df_res
