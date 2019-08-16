@@ -37,9 +37,9 @@ def train_model(
     :param filename
     :return:
     """
-    if os.path.exists(filename):
-        res = load_pickle(filename)
-        return res["vae"], res["trainer"]
+    # if os.path.exists(filename):
+    #     res = load_pickle(filename)
+    #     return res["vae"], res["trainer"]
 
     if "test_indices" not in train_params:
         warnings.warn("No `test_indices` attribute found.")
