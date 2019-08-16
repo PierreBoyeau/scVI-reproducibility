@@ -52,9 +52,9 @@ class DEClass:
 
         # computing data mask
         set_a = np.where(self.c_train == self.cluster[0])[0]
-        subset_a = np.random.choice(set_a, self.A)
+        subset_a = np.random.choice(set_a, self.A, replace=False)
         set_b = np.where(self.c_train == self.cluster[1])[0]
-        subset_b = np.random.choice(set_b, self.B)
+        subset_b = np.random.choice(set_b, self.B, replace=False)
 
         stochastic_set = np.hstack((subset_a, subset_b))
 
