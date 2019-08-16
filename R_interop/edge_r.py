@@ -63,5 +63,5 @@ class EdgeR(object):
         ro.r("""dge <- estimateDisp(dge, design)""")
         ro.r("""fit <- glmFit(dge, design)""")
         ro.r("""lrt <- glmWeightedF(fit, coef = 2, ZI=FALSE)""")
-        return pd.DataFrame(ro.r("lrt$table)"))
+        return pd.DataFrame(ro.r("lrt$table"))
 
