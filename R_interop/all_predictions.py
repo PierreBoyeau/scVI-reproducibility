@@ -154,7 +154,7 @@ def all_de_predictions(dict_results, significance_level, delta):
         if algorithm_name == "deseq2":
             is_de = my_pvals <= significance_level
 
-        elif algorithm_name == "edger":
+        elif algorithm_name == "edger" or algorithm_name == "edger_robust":
             is_de = my_pvals <= significance_level
 
         elif algorithm_name == "mast":
