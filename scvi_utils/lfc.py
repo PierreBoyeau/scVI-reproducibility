@@ -288,6 +288,7 @@ def multi_train_estimates(
                     experiment=lambda x: exp,
                     sample_size=lambda x: size,
                     training=lambda x: training,
+                    gene=np.arange(dataset.nb_genes)
                 )
                 dfs_li.append(df)
     df_res = pd.concat(dfs_li, ignore_index=True)
