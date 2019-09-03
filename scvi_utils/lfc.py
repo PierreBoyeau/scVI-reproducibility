@@ -272,6 +272,10 @@ def multi_train_estimates(
                 lfc_mean = np.nanmean(lfc, axis=0)
                 lfc_std = np.nanstd(lfc, axis=0)
                 hdi64 = compute_hdi(lfc, credible_interval=0.64)
+                hdi25 = compute_hdi(lfc, credible_interval=0.25)
+                hdi50 = compute_hdi(lfc, credible_interval=0.50)
+                hdi75 = compute_hdi(lfc, credible_interval=0.75)
+                hdi95 = compute_hdi(lfc, credible_interval=0.95)
                 hdi99 = compute_hdi(lfc, credible_interval=0.99)
 
                 df = pd.DataFrame(
@@ -279,6 +283,14 @@ def multi_train_estimates(
                         de_proba=pgs,
                         lfc_mean=lfc_mean,
                         lfc_std=lfc_std,
+                        hdi25_low=hdi25[:, 0],
+                        hdi25_high=hdi25[:, 1],
+                        hdi50_low=hdi50[:, 0],
+                        hdi50_high=hdi50[:, 1],
+                        hdi75_low=hdi75[:, 0],
+                        hdi75_high=hdi75[:, 1],
+                        hdi95_low=hdi95[:, 0],
+                        hdi95_high=hdi95[:, 1],
                         hdi64_low=hdi64[:, 0],
                         hdi64_high=hdi64[:, 1],
                         hdi99_low=hdi99[:, 0],
