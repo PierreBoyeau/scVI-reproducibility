@@ -303,8 +303,8 @@ def multi_train_estimates(
                 scales_a = scales[:, where_a, :].reshape((-1, dataset.nb_genes)).numpy()
                 scales_b = scales[:, where_b, :].reshape((-1, dataset.nb_genes)).numpy()
                 if importance_sampling:
-                    weights_a = weights[:, where_a].reshape((-1)).numpy() / len(where_a)
-                    weights_b = weights[:, where_b].reshape((-1)).numpy() / len(where_b)
+                    weights_a = weights[:, where_a].reshape((-1)) / len(where_a)
+                    weights_b = weights[:, where_b].reshape((-1)) / len(where_b)
                 else:
                     weights_a = None
                     weights_b = None
