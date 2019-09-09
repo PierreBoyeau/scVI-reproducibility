@@ -1,5 +1,5 @@
 from scvi.inference import UnsupervisedTrainer
-from scvi.utils import demultiply, compute_hdi
+from scvi.utils import demultiply, compute_hdi, softmax
 import os
 from tqdm import tqdm_notebook
 import pandas as pd
@@ -62,6 +62,7 @@ def estimate_lfc_density(
     n_samples: int = 500,
     label_a=0,
     label_b=1,
+    importance_sampling=False
 ):
     """
 
@@ -79,18 +80,33 @@ def estimate_lfc_density(
     )
     outputs = post.get_latents(n_samples=n_samples, other=True, device="cpu")
     z, labels, scales = outputs["z"], outputs["label"], outputs["scale"]
+    weights = softmax(outputs["log_probas"], axis=0)
 
     for (size_ix, size) in enumerate(tqdm_notebook(sizes)):
         lfc_size = []
         for exp in range(n_picks):
             labels = labels.squeeze()
+            # Sampling cells
             where_a = np.where(labels == label_a)[0]
             where_b = np.where(labels == label_b)[0]
             where_a = where_a[np.random.choice(len(where_a), size=size)]
             where_b = where_b[np.random.choice(len(where_b), size=size)]
+            # Sampling z observations
             scales_a = scales[:, where_a, :].reshape((-1, dataset.nb_genes)).numpy()
             scales_b = scales[:, where_b, :].reshape((-1, dataset.nb_genes)).numpy()
-            scales_a, scales_b = demultiply(arr1=scales_a, arr2=scales_b, factor=3)
+            if importance_sampling:
+                weights_a = weights[:, where_a].reshape((-1)).numpy() / len(where_a)
+                weights_b = weights[:, where_b].reshape((-1)).numpy() / len(where_b)
+            else:
+                weights_a = None
+                weights_b = None
+            scales_a, scales_b = demultiply(
+                arr1=scales_a,
+                arr2=scales_b,
+                factor=3,
+                weights_a=weights_a,
+                weights_b=weights_b
+            )
             lfc = np.log2(scales_a) - np.log2(scales_b)
             assert not np.isnan(lfc).any(), lfc
             lfc_size.append(lfc)
@@ -112,6 +128,7 @@ def estimate_lfc_mean(
     n_samples: int = 500,
     label_a=0,
     label_b=1,
+    importance_sampling=False
 ) -> dict:
     """
         Returns LFC POINT ESTIMATES
@@ -130,18 +147,33 @@ def estimate_lfc_mean(
     )
     outputs = post.get_latents(n_samples=n_samples, other=True, device="cpu")
     z, labels, scales = outputs["z"], outputs["label"], outputs["scale"]
+    weights = softmax(outputs["log_probas"], axis=0)
 
     for (size_ix, size) in enumerate(tqdm_notebook(sizes)):
         lfc_size = []
         for exp in range(n_picks):
             labels = labels.squeeze()
+            # Sampling cells
             where_a = np.where(labels == label_a)[0]
             where_b = np.where(labels == label_b)[0]
             where_a = where_a[np.random.choice(len(where_a), size=size)]
             where_b = where_b[np.random.choice(len(where_b), size=size)]
+            # Sampling z observations
             scales_a = scales[:, where_a, :].reshape((-1, dataset.nb_genes)).numpy()
             scales_b = scales[:, where_b, :].reshape((-1, dataset.nb_genes)).numpy()
-            scales_a, scales_b = demultiply(arr1=scales_a, arr2=scales_b, factor=3)
+            if importance_sampling:
+                weights_a = weights[:, where_a].reshape((-1)).numpy() / len(where_a)
+                weights_b = weights[:, where_b].reshape((-1)).numpy() / len(where_b)
+            else:
+                weights_a = None
+                weights_b = None
+            scales_a, scales_b = demultiply(
+                arr1=scales_a,
+                arr2=scales_b,
+                factor=3,
+                weights_a=weights_a,
+                weights_b=weights_b
+            )
             lfc = np.log2(scales_a) - np.log2(scales_b)
             # assert not np.isnan(lfc).any(), lfc
             if np.isnan(lfc).any():
@@ -226,6 +258,7 @@ def multi_train_estimates(
     n_samples: int = 500,
     label_a=0,
     label_b=1,
+    importance_sampling=False
 ):
     """
 
@@ -256,17 +289,32 @@ def multi_train_estimates(
             n_samples=n_samples, other=True, device="cpu"
         )
         z, labels, scales = outputs["z"], outputs["label"], outputs["scale"]
+        weights = softmax(outputs["log_probas"], axis=0)
 
         for (size_ix, size) in enumerate(tqdm_notebook(sizes)):
             for exp in range(n_picks):
                 labels = labels.squeeze()
+                # Sampling cells
                 where_a = np.where(labels == label_a)[0]
                 where_b = np.where(labels == label_b)[0]
                 where_a = where_a[np.random.choice(len(where_a), size=size)]
                 where_b = where_b[np.random.choice(len(where_b), size=size)]
+                # Sampling z observations
                 scales_a = scales[:, where_a, :].reshape((-1, dataset.nb_genes)).numpy()
                 scales_b = scales[:, where_b, :].reshape((-1, dataset.nb_genes)).numpy()
-                scales_a, scales_b = demultiply(arr1=scales_a, arr2=scales_b, factor=3)
+                if importance_sampling:
+                    weights_a = weights[:, where_a].reshape((-1)).numpy() / len(where_a)
+                    weights_b = weights[:, where_b].reshape((-1)).numpy() / len(where_b)
+                else:
+                    weights_a = None
+                    weights_b = None
+                scales_a, scales_b = demultiply(
+                    arr1=scales_a,
+                    arr2=scales_b,
+                    factor=3,
+                    weights_a=weights_a,
+                    weights_b=weights_b
+                )
                 lfc = np.log2(scales_a) - np.log2(scales_b)
                 assert lfc.shape[1] == dataset.nb_genes
                 if np.isnan(lfc).any():
