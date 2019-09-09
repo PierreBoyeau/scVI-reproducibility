@@ -77,7 +77,8 @@ def estimate_lfc_density(
     post = my_trainer.create_posterior(
         model=my_vae, gene_dataset=dataset, indices=train_samples
     )
-    z, labels, scales = post.get_latents(n_samples=n_samples, other=True, device="cpu")
+    outputs = post.get_latents(n_samples=n_samples, other=True, device="cpu")
+    z, labels, scales = outputs["z"], outputs["label"], outputs["scale"]
 
     for (size_ix, size) in enumerate(tqdm_notebook(sizes)):
         lfc_size = []
@@ -127,7 +128,8 @@ def estimate_lfc_mean(
     post = my_trainer.create_posterior(
         model=my_vae, gene_dataset=dataset, indices=train_samples
     )
-    z, labels, scales = post.get_latents(n_samples=n_samples, other=True, device="cpu")
+    outputs = post.get_latents(n_samples=n_samples, other=True, device="cpu")
+    z, labels, scales = outputs["z"], outputs["label"], outputs["scale"]
 
     for (size_ix, size) in enumerate(tqdm_notebook(sizes)):
         lfc_size = []
@@ -185,9 +187,10 @@ def estimate_de_proba(
         post = my_trainer.create_posterior(
             model=my_vae, gene_dataset=dataset, indices=train_samples
         )
-        z, labels, scales = post.get_latents(
+        outputs = post.get_latents(
             n_samples=n_samples, other=True, device="cpu"
         )
+        z, labels, scales = outputs["z"], outputs["label"], outputs["scale"]
 
         for (size_ix, size) in enumerate(tqdm_notebook(sizes)):
             for exp in range(n_picks):
@@ -249,9 +252,10 @@ def multi_train_estimates(
         post = my_trainer.create_posterior(
             model=my_vae, gene_dataset=dataset, indices=train_samples
         )
-        z, labels, scales = post.get_latents(
+        outputs = post.get_latents(
             n_samples=n_samples, other=True, device="cpu"
         )
+        z, labels, scales = outputs["z"], outputs["label"], outputs["scale"]
 
         for (size_ix, size) in enumerate(tqdm_notebook(sizes)):
             for exp in range(n_picks):
