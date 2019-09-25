@@ -258,11 +258,13 @@ def multi_train_estimates(
     n_samples: int = 500,
     label_a=0,
     label_b=1,
-    importance_sampling=False
+    importance_sampling=False,
+    normalized_means=None
 ):
     """
 
     """
+    n_examples, n_genes = dataset.X.shape
     if os.path.exists(filename):
         return pd.read_pickle(filename)
 
@@ -275,15 +277,17 @@ def multi_train_estimates(
 
     #     lfcs = np.zeros((n_trainings, N_SIZES, n_picks, dataset.nb_genes, 3*n_samples))
     dfs_li = []
+    local_lfc_gt = None
+    local_is_de = None
     for training in range(n_trainings):
         my_vae, my_trainer = train_model(
             mdl_class, dataset, mdl_params, train_params, train_fn_params
         )
         post = my_trainer.test_set
-        train_indices = post.data_loader.sampler.indices
-        train_samples = np.random.permutation(train_indices)
+        test_indices = post.data_loader.sampler.indices
+        # train_samples = np.random.permutation(train_indices)
         post = my_trainer.create_posterior(
-            model=my_vae, gene_dataset=dataset, indices=train_samples
+            model=my_vae, gene_dataset=dataset, indices=test_indices
         )
         outputs = post.get_latents(
             n_samples=n_samples, other=True, device="cpu"
@@ -308,6 +312,14 @@ def multi_train_estimates(
                 else:
                     weights_a = None
                     weights_b = None
+                if normalized_means is not None:
+                    overall_idx_a = test_indices[where_a]
+                    overall_idx_b = test_indices[where_b]
+                    h_a = normalized_means[overall_idx_a].reshape((-1, 1, n_genes))
+                    h_b = normalized_means[overall_idx_b].reshape((1, -1, n_genes))
+                    lfc_dist = (np.log2(h_a) - np.log2(h_b)).reshape((-1, n_genes))
+                    local_lfc_gt = lfc_dist.mean(0)
+                    local_is_de = (np.abs(lfc_dist) >= delta).mean(0)
                 scales_a, scales_b = demultiply(
                     arr1=scales_a,
                     arr2=scales_b,
@@ -352,7 +364,9 @@ def multi_train_estimates(
                     experiment=lambda x: exp,
                     sample_size=lambda x: size,
                     training=lambda x: training,
-                    gene=np.arange(dataset.nb_genes)
+                    gene=np.arange(dataset.nb_genes),
+                    lfc_gt=local_lfc_gt,
+                    is_de=local_is_de,
                 )
                 dfs_li.append(df)
     df_res = pd.concat(dfs_li, ignore_index=True)
