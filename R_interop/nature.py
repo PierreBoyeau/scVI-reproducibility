@@ -42,7 +42,6 @@ class DEClass:
         self.X_train = np.load(self.data)
         n_samples, n_genes = self.X_train.shape
         self.c_train = np.loadtxt(self.labels)
-        self.normalized_means = np.load(normalized_means)
         # loading data
         ro.r(
             str("""fmat <- npyLoad("*""")[:-1]
@@ -60,11 +59,13 @@ class DEClass:
         set_b = np.where(self.c_train == self.cluster[1])[0]
         subset_b = np.random.choice(set_b, self.B, replace=False)
 
-        h_a = self.normalized_means[subset_a].reshape((-1, 1, n_genes))
-        h_b = self.normalized_means[subset_b].reshape((1, -1, n_genes))
-        lfc_dist = (np.log2(h_a) - np.log2(h_b)).reshape((-1, 1))
-        self.lfc_gt = lfc_dist.mean(0)
-        self.is_de = (np.abs(lfc_dist) >= delta).mean(0)
+        if normalized_means is not None:
+            self.normalized_means = np.load(normalized_means)
+            h_a = self.normalized_means[subset_a].reshape((-1, 1, n_genes))
+            h_b = self.normalized_means[subset_b].reshape((1, -1, n_genes))
+            lfc_dist = (np.log2(h_a) - np.log2(h_b)).reshape((-1, 1))
+            self.lfc_gt = lfc_dist.mean(0)
+            self.is_de = (np.abs(lfc_dist) >= delta).mean(0)
 
         stochastic_set = np.hstack((subset_a, subset_b))
 
