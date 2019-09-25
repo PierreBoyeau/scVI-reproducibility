@@ -13,6 +13,8 @@ class DEClass:
         B: int,
         data: str,
         labels: str,
+        normalized_means: str,
+        delta: float,
         cluster: tuple,
         path_to_scripts: str,
     ):
@@ -38,7 +40,9 @@ class DEClass:
         ro.r.assign("path_to_scripts", path_to_scripts)
 
         self.X_train = np.load(self.data)
+        n_samples, n_genes = self.X_train.shape
         self.c_train = np.loadtxt(self.labels)
+        self.normalized_means = np.load(normalized_means)
         # loading data
         ro.r(
             str("""fmat <- npyLoad("*""")[:-1]
@@ -55,6 +59,12 @@ class DEClass:
         subset_a = np.random.choice(set_a, self.A, replace=False)
         set_b = np.where(self.c_train == self.cluster[1])[0]
         subset_b = np.random.choice(set_b, self.B, replace=False)
+
+        h_a = self.normalized_means[subset_a].reshape((-1, 1, n_genes))
+        h_b = self.normalized_means[subset_b].reshape((1, -1, n_genes))
+        lfc_dist = (np.log2(h_a) - np.log2(h_b)).reshape((-1, 1))
+        self.lfc_gt = lfc_dist.mean(0)
+        self.is_de = (np.abs(lfc_dist) >= delta).mean(0)
 
         stochastic_set = np.hstack((subset_a, subset_b))
 
@@ -88,6 +98,8 @@ class NEdgeRLTRT(DEClass):
         B: int,
         data: str,
         labels: str,
+        normalized_means: str,
+        delta: float,
         cluster: tuple,
         path_to_scripts: str,
     ):
@@ -96,6 +108,8 @@ class NEdgeRLTRT(DEClass):
             B=B,
             data=data,
             labels=labels,
+            normalized_means=normalized_means,
+            delta=delta,
             cluster=cluster,
             path_to_scripts=path_to_scripts,
         )
@@ -104,7 +118,11 @@ class NEdgeRLTRT(DEClass):
         ro.r("script_path <- paste(path_to_scripts, 'apply_edgeRLRT.R', sep='/')")
         ro.r("source(script_path)")
         ro.r("res <- run_edgeRLRT(L)")
-        return pd.DataFrame(ro.r("res$df"))
+        res = (
+            pd.DataFrame(ro.r("res$df"))
+            .assign(lfc_gt=self.lfc_gt, is_de=self.is_de)
+        )
+        return res
 
 
 class NEdgeRLTRTRobust(DEClass):
@@ -114,6 +132,8 @@ class NEdgeRLTRTRobust(DEClass):
         B: int,
         data: str,
         labels: str,
+        normalized_means: str,
+        delta: float,
         cluster: tuple,
         path_to_scripts: str,
     ):
@@ -122,6 +142,8 @@ class NEdgeRLTRTRobust(DEClass):
             B=B,
             data=data,
             labels=labels,
+            normalized_means=normalized_means,
+            delta=delta,
             cluster=cluster,
             path_to_scripts=path_to_scripts,
         )
@@ -130,7 +152,11 @@ class NEdgeRLTRTRobust(DEClass):
         ro.r("script_path <- paste(path_to_scripts, 'apply_edgeRLRTrobust.R', sep='/')")
         ro.r("source(script_path)")
         ro.r("res <- run_edgeRLRTrobust(L)")
-        return pd.DataFrame(ro.r("res$df"))
+        res = (
+            pd.DataFrame(ro.r("res$df"))
+            .assign(lfc_gt=self.lfc_gt, is_de=self.is_de)
+        )
+        return res
 
 
 class NDESeq2(DEClass):
@@ -140,6 +166,8 @@ class NDESeq2(DEClass):
         B: int,
         data: str,
         labels: str,
+        normalized_means: str,
+        delta: float,
         cluster: tuple,
         path_to_scripts: str,
         lfc_threshold: float = 0.5,
@@ -151,6 +179,8 @@ class NDESeq2(DEClass):
             B=B,
             data=data,
             labels=labels,
+            normalized_means=normalized_means,
+            delta=delta,
             cluster=cluster,
             path_to_scripts=path_to_scripts,
         )
@@ -159,7 +189,11 @@ class NDESeq2(DEClass):
         ro.r("script_path <- paste(path_to_scripts, 'apply_DESeq2.R', sep='/')")
         ro.r("source(script_path)")
         ro.r("res <- run_DESeq2(L, lfcThreshold=lfc_threshold)")
-        return pd.DataFrame(ro.r("res$df"))
+        res = (
+            pd.DataFrame(ro.r("res$df"))
+            .assign(lfc_gt=self.lfc_gt, is_de=self.is_de)
+        )
+        return res
 
 
 class NMASTcpm(DEClass):
@@ -169,6 +203,8 @@ class NMASTcpm(DEClass):
         B: int,
         data: str,
         labels: str,
+        normalized_means: str,
+        delta: float,
         cluster: tuple,
         path_to_scripts: str,
     ):
@@ -177,6 +213,8 @@ class NMASTcpm(DEClass):
             B=B,
             data=data,
             labels=labels,
+            normalized_means=normalized_means,
+            delta=delta,
             cluster=cluster,
             path_to_scripts=path_to_scripts,
         )
@@ -186,8 +224,8 @@ class NMASTcpm(DEClass):
         ro.r("source(script_path)")
         ro.r("res <- run_MASTcpm(L)")
         # return ro.r("res")
-        return pd.DataFrame(ro.r("res$df"))
-
+        res = pd.DataFrame(ro.r("res$df"))
+        return res
 
 # class NSCDE(DEClass):
 #     def __init__(
