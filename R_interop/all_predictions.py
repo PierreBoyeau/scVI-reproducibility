@@ -25,6 +25,8 @@ def all_predictions(
     labels_path,
     label_a=0,
     label_b=1,
+    normalized_means,
+    delta,
     path_to_scripts=None,
     lfc_threshold: float = 0.5,
     all_nature=True,
@@ -46,6 +48,8 @@ def all_predictions(
                 data=data_path,
                 labels=labels_path,
                 cluster=(label_a, label_b),
+                normalized_means=normalized_means,
+                delta=delta,
                 path_to_scripts=path_to_scripts,
                 lfc_threshold=lfc_threshold,
             )
@@ -69,6 +73,8 @@ def all_predictions(
                 B=size,
                 data=data_path,
                 labels=labels_path,
+                normalized_means=normalized_means,
+                delta=delta,
                 cluster=(label_a, label_b),
                 path_to_scripts=path_to_scripts,
             )
@@ -94,6 +100,8 @@ def all_predictions(
                     B=size,
                     data=data_path,
                     labels=labels_path,
+                    normalized_means=normalized_means,
+                    delta=delta,
                     cluster=(label_a, label_b),
                     path_to_scripts=path_to_scripts,
                 )
